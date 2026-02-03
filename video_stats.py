@@ -70,8 +70,6 @@ def extract_video_stats(video_ids):
         for i in range(0, len(video_ids_list), batch_size):
             yield video_ids_list[i:i+batch_size]
 
-
-
     try:
         for batch in batch_list(video_ids, maxResults):
             ids = ",".join(batch)
