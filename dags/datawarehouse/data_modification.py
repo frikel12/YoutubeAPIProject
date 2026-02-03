@@ -26,7 +26,7 @@ def insert_data(schema, connection, cursor, row):
             # Use unquoted identifiers for production/core tables (they are created with unquoted column names)
             cursor.execute(
                 f"""
-                INSERT INTO {schema}.{table} (videoId, title, publishedAt, duration, viewCount, likeCount, commentCount)
+                INSERT INTO {schema}.{table} (\"videoId\", \"title\", \"publishedAt\", \"duration\", \"viewCount\", \"likeCount\", \"commentCount\")
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -52,12 +52,12 @@ def update_rows(schema, connection, cursor, row):
                 f"""
                 UPDATE {schema}.{table}
                 SET title = %s,
-                    publishedAt = %s,
-                    duration = %s,
-                    viewCount = %s,
-                    likeCount = %s,
-                    commentCount = %s
-                WHERE videoId = %s
+                    "publishedAt" = %s,
+                    "duration" = %s,
+                    "viewCount" = %s,
+                    "likeCount" = %s,
+                    "commentCount" = %s
+                WHERE "videoId" = %s
                 """,
                 (
                     row.get("title"),
@@ -82,7 +82,7 @@ def delete_rows(schema, connection, cursor, video_ids):
             cursor.execute(
                 f"""
                 DELETE FROM {schema}.{table}
-                WHERE videoId IN ({format_strings})
+                WHERE "videoId" IN ({format_strings})
                 """,
                 tuple(video_ids)
             )

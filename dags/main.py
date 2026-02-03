@@ -2,6 +2,7 @@ from airflow.decorators import dag
 from airflow import DAG
 from api.video_stats import get_playlist_id, get_video_ids, extract_video_stats, save_to_json
 from datetime import date, datetime
+from dataquality.soda import yt_elt_data_quality
 from datawarehouse.dwh import staging_table, core_table
 
 
@@ -40,5 +41,21 @@ with DAG(
     update_core = core_table()
 
     update_staging >> update_core
+
+
+with DAG(
+    dag_id="data_quality", 
+    description="DAG to run data quality checks",
+    start_date=datetime(2024, 1, 1),
+    schedule_interval="@once", 
+    catchup=False,
+    max_active_runs=1
+) as dag:
+    
+
+    soda_validate_staging = yt_elt_data_quality("staging")
+    soda_validate_core = yt_elt_data_quality("core")
+
+    soda_validate_staging >> soda_validate_core
 
 

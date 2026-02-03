@@ -56,13 +56,13 @@ def create_table(schema, connection, cursor):
     else:
         create_table_query = f"""
         CREATE TABLE IF NOT EXISTS {schema}.{table} (
-            videoId TEXT PRIMARY KEY,
-            title TEXT,
-            publishedAt TIMESTAMP,
-            duration TEXT,
-            viewCount BIGINT,
-            likeCount BIGINT,
-            commentCount BIGINT
+            "videoId" VARCHAR(11) PRIMARY KEY NOT NULL,
+            "title" TEXT NOT NULL,
+            "publishedAt" TIMESTAMP NOT NULL,
+            "duration" VARCHAR(20) NOT NULL,
+            "viewCount" INT,
+            "likeCount" INT,
+            "commentCount" INT
         )
         """
     cursor.execute(create_table_query)

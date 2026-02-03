@@ -66,12 +66,12 @@ def core_table():
 
         current_video_ids = set()
 
-        # Fetch all rows from staging and map to dictionaries so transform_data can work
         cursor.execute(f"SELECT * FROM staging.{table}")
         rows = cursor.fetchall()
         col_names = [desc[0] for desc in cursor.description]
 
         for row in rows:
+            # Map tuple to dict so transform_data can access by key
             row_dict = dict(zip(col_names, row))
 
             # Find the key used for video id (handles different column name cases)
@@ -87,8 +87,8 @@ def core_table():
 
             current_video_ids.add(row_dict[id_key])
 
-            # Transform row (expects dict)
-            transform_row = transform_data(row_dict)
+            # Work on a copy to avoid mutating fetched data directly
+            transform_row = transform_data(dict(row_dict))
 
             if len(table_ids) == 0:
                 insert_data(schema, connection, cursor, transform_row)
