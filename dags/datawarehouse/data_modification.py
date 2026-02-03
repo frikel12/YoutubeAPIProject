@@ -1,7 +1,3 @@
-# Deprecated: Renamed to `data_modification.py` (use `datawarehouse.data_modification`)
-# This file is kept for historical reasons but should not be imported.
-# If you want to remove it, delete this file after verifying no references remain.
-
 import json
 
 table = "youtube_video_stats"
@@ -13,7 +9,7 @@ def insert_data(schema, connection, cursor, row):
         if schema == "staging":
             cursor.execute(
                 f"""
-                INSERT INTO {schema}.{table} (videoId, title, publishedAt, duration, viewCount, likeCount, commentCount)
+                INSERT INTO {schema}.{table} (\"videoId\", \"title\", \"publishedAt\", \"duration\", \"viewCount\", \"likeCount\", \"commentCount\")
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -27,19 +23,20 @@ def insert_data(schema, connection, cursor, row):
                 )
             )
         else:
+            # Use unquoted identifiers for production/core tables (they are created with unquoted column names)
             cursor.execute(
                 f"""
                 INSERT INTO {schema}.{table} (videoId, title, publishedAt, duration, viewCount, likeCount, commentCount)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
-                    row.get("videoId"),
+                    row.get("videoId") or row.get("videoid"),
                     row.get("title"),
                     row.get("publishedAt"),
                     row.get("duration"),
-                    int(row["viewCount"]) if row.get("viewCount") is not None else None,
-                    int(row["likeCount"]) if row.get("likeCount") is not None else None,
-                    int(row["commentCount"]) if row.get("commentCount") is not None else None
+                    int(row["viewCount"]) if row.get("viewCount") is not None else (int(row.get("viewcount")) if row.get("viewcount") is not None else None),
+                    int(row["likeCount"]) if row.get("likeCount") is not None else (int(row.get("likecount")) if row.get("likecount") is not None else None),
+                    int(row["commentCount"]) if row.get("commentCount") is not None else (int(row.get("commentcount")) if row.get("commentcount") is not None else None)
                 )
             )
 

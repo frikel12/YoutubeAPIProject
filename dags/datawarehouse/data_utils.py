@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import sql
 import os
 
 table = "youtube_video_stats"
@@ -27,9 +28,15 @@ def close_conn_cursor(connection, cursor):
 def create_schema(schema, connection, cursor):
     # Create schema if it does not exist
     create_schema_query = f"CREATE SCHEMA IF NOT EXISTS {schema}"
-    cursor.execute(create_schema_query)
-
-    connection.commit()
+    try:
+        cursor.execute(create_schema_query)
+        connection.commit()
+    except psycopg2.errors.UniqueViolation:
+        # Concurrent create may cause a duplicate key error; rollback and continue
+        try:
+            connection.rollback()
+        except Exception:
+            pass
 
 
 def create_table(schema, connection, cursor):
@@ -64,7 +71,45 @@ def create_table(schema, connection, cursor):
 
 
 def get_video_ids(cur, schema):
-    cur.execute(f"SELECT videoId FROM {schema}.{table}")
+    # Detect the actual column name for the video id (handles camelCase or snake_case)
+    cur.execute(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = %s AND table_name = %s AND lower(column_name) = lower(%s)
+        LIMIT 1
+        """,
+        (schema, table, 'videoId')
+    )
+    row = cur.fetchone()
+
+    if not row:
+        # Fallback: look for any column that contains 'videoid' (case-insensitive)
+        cur.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = %s AND table_name = %s AND lower(column_name) LIKE %s
+            LIMIT 1
+            """,
+            (schema, table, '%videoid%')
+        )
+        row = cur.fetchone()
+
+    if not row:
+        # Table or column does not exist yet or has unexpected schema
+        return []
+
+    col_name = row[0]
+
+    # Use psycopg2.sql to safely compose identifiers with proper quoting
+    query = sql.SQL("SELECT {col} FROM {schema}.{tbl}").format(
+        col=sql.Identifier(col_name),
+        schema=sql.Identifier(schema),
+        tbl=sql.Identifier(table)
+    )
+
+    cur.execute(query)
     rows = cur.fetchall()
-    return [row[0] for row in rows]
+    return [r[0] for r in rows]
     
